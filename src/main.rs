@@ -1,5 +1,5 @@
 use actix_web::{web, App, HttpServer, Responder};
-use tokio_postgres::NoTls;
+use tokio_postgres::{NoTls};
 use serde::{Deserialize, Serialize};
 use bcrypt::{hash, verify};
 
@@ -41,9 +41,13 @@ async fn login_user(user: web::Json<User>, db_pool: web::Data<tokio_postgres::Cl
 #[actix_web::main]
 async fn main() -> std::io::Result<()> {
     let (db_client, db_connection) =
-        tokio_postgres::connect("host=localhost user=postgres password=yourpassword dbname=chat_db", NoTls)
-            .await
-            .unwrap();
+        match tokio_postgres::connect("host=127.0.0.1 user=postgres password=yourpassword dbname=chat_db", NoTls).await {
+            Ok((client, connection)) => (client, connection),
+            Err(e) => {
+                eprintln!("Failed to connect to the database: {}", e);
+                std::process::exit(1);
+            }
+        };
 
     // Spawning a task to manage the connection
     tokio::spawn(async move {
